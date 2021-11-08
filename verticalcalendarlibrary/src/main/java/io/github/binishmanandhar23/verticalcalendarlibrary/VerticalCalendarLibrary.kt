@@ -7,10 +7,12 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -28,6 +30,7 @@ import io.github.binishmanandhar23.verticalcalendarlibrary.enum.WeekDayEnum
 import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarDay
 import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarVisualModifications
 import io.github.binishmanandhar23.verticalcalendarlibrary.repository.CalendarPagingRepo
+import io.github.binishmanandhar23.verticalcalendarlibrary.repository.CalendarPagingRepoV2
 import io.github.binishmanandhar23.verticalcalendarlibrary.viewmodel.CalendarViewModel
 import org.threeten.bp.LocalDate
 import java.util.*
@@ -65,11 +68,11 @@ class VerticalCalendarLibrary {
         this.weekDayEnd = weekDayEnd
         this.days = listOfDays
         val calendarPagingRepo = CalendarPagingRepo(startingMonthFromCurrentMonth)
-        val calendarViewModel = CalendarViewModel(calendarPagingRepo = calendarPagingRepo)
+        val calendarViewModel = CalendarViewModel(calendarPagingRepo = calendarPagingRepo, calendarPagingRepoV2 = CalendarPagingRepoV2())
 
         Column {
             TopHeader(listState = listState, calendarVisualModifications)
-            Body(
+            BodyV2(
                 listState = listState,
                 calendarDates,
                 calendarViewModel,
@@ -146,6 +149,46 @@ class VerticalCalendarLibrary {
                         }
                     )
                 }
+            })
+        }
+    }
+
+    @OptIn(ExperimentalFoundationApi::class)
+    @Composable
+    fun BodyV2(
+        listState: LazyListState,
+        calendarDates: Collection<CalendarDay>?,
+        calendarViewModel: CalendarViewModel,
+        calendarVisualModifications: CalendarVisualModifications,
+        onClick: () -> Unit
+    ) {
+        var selectedDate: LocalDate by remember { mutableStateOf(LocalDate.now()) }
+        val hapticFeedback = LocalHapticFeedback.current
+        val calendarData = calendarViewModel.getCalendarDataV2()?.observeAsState()
+        LazyColumn(state = listState, modifier = Modifier.fillMaxWidth()) {
+            itemsIndexed(items = calendarData?.value?: ArrayList(), itemContent = { _, value ->
+                    Text(
+                        "${
+                            value.month.getDisplayName(
+                                org.threeten.bp.format.TextStyle.FULL,
+                                Locale.getDefault()
+                            )
+                        } ${value.year}",
+                        modifier = Modifier.padding(20.dp),
+                        style = calendarVisualModifications.textStyleForHeading,
+                        textAlign = TextAlign.Center
+                    )
+                    PopulateCalendar(
+                        value = value,
+                        selectedDate,
+                        hapticFeedback,
+                        calendarDates,
+                        calendarVisualModifications,
+                        onClick = {
+                            selectedDate = it
+                            onClick.invoke()
+                        }
+                    )
             })
         }
     }
