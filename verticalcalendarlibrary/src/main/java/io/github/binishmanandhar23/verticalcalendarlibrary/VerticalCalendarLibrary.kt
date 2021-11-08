@@ -1,31 +1,34 @@
 package io.github.binishmanandhar23.verticalcalendarlibrary
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.hapticfeedback.HapticFeedback
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import androidx.lifecycle.MutableLiveData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemsIndexed
 import io.github.binishmanandhar23.verticalcalendarlibrary.enum.WeekDayEnum
+import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarDay
+import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarVisualModifications
 import io.github.binishmanandhar23.verticalcalendarlibrary.repository.CalendarPagingRepo
 import io.github.binishmanandhar23.verticalcalendarlibrary.viewmodel.CalendarViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDate
 import java.util.*
 import kotlin.collections.ArrayList
@@ -35,11 +38,14 @@ class VerticalCalendarLibrary {
     var cellSize = 30.dp
     var startingMonthFromCurrentMonth = 60
     var weekDayEnd: WeekDayEnum = WeekDayEnum.SUNDAY
+    val scroll = MutableLiveData(false)
     lateinit var days: List<String>
 
     @Composable
     fun initialize(
         cellSize: Dp,
+        listState: LazyListState,
+        calendarDates: Collection<CalendarDay>?,
         startingMonthFromCurrentMonth: Int = 60,
         listOfDays: List<String> = listOf(
             "Mon",
@@ -51,43 +57,45 @@ class VerticalCalendarLibrary {
             "Sun"
         ),
         weekDayEnd: WeekDayEnum = WeekDayEnum.SUNDAY,
-        textStyleForWeekDays: TextStyle = TextStyle(),
-        textStyleForHeading: TextStyle = TextStyle(),
-        textStyleForBody: TextStyle = TextStyle(),
+        calendarVisualModifications: CalendarVisualModifications,
+        onClick: () -> Unit
     ) {
         this.cellSize = cellSize
         this.startingMonthFromCurrentMonth = startingMonthFromCurrentMonth
         this.weekDayEnd = weekDayEnd
         this.days = listOfDays
-        val listState = rememberLazyListState()
-        val coroutineScope = rememberCoroutineScope()
-        val calendarViewModel = CalendarViewModel(CalendarPagingRepo(startingMonthFromCurrentMonth))
+        val calendarPagingRepo = CalendarPagingRepo(startingMonthFromCurrentMonth)
+        val calendarViewModel = CalendarViewModel(calendarPagingRepo = calendarPagingRepo)
+
         Column {
-            TopHeader(listState = listState, coroutineScope = coroutineScope, textStyleForWeekDays)
-            Body(listState = listState, calendarViewModel, textStyleForHeading, textStyleForBody)
+            TopHeader(listState = listState, calendarVisualModifications)
+            Body(
+                listState = listState,
+                calendarDates,
+                calendarViewModel,
+                calendarVisualModifications,
+                onClick = onClick
+            )
         }
     }
 
     @Composable
-    fun TopHeader(listState: LazyListState, coroutineScope: CoroutineScope, textStyleForWeekDays: TextStyle) {
+    fun TopHeader(
+        listState: LazyListState,
+        calendarVisualModifications: CalendarVisualModifications
+    ) {
         Column {
-            Row(horizontalArrangement = Arrangement.SpaceAround, modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 20.dp)
-                .clickable {
-                    coroutineScope.launch {
-                        listState.animateScrollToItem(startingMonthFromCurrentMonth)
-                    }
-                }) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceAround, modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp)
+            ) {
                 days.forEach {
                     Text(
                         it,
-                        style = textStyleForWeekDays.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 13.sp,
-                            textAlign = TextAlign.Center
-                        ),
-                        modifier = Modifier.size(cellSize)
+                        style = calendarVisualModifications.textStyleForWeekDays,
+                        modifier = Modifier.size(cellSize),
+                        textAlign = TextAlign.Center
                     )
                 }
             }
@@ -102,7 +110,15 @@ class VerticalCalendarLibrary {
 
     @OptIn(ExperimentalFoundationApi::class)
     @Composable
-    fun Body(listState: LazyListState, calendarViewModel: CalendarViewModel, textStyleForHeading: TextStyle, textStyleForBody: TextStyle) {
+    fun Body(
+        listState: LazyListState,
+        calendarDates: Collection<CalendarDay>?,
+        calendarViewModel: CalendarViewModel,
+        calendarVisualModifications: CalendarVisualModifications,
+        onClick: () -> Unit
+    ) {
+        var selectedDate: LocalDate by remember { mutableStateOf(LocalDate.now()) }
+        val hapticFeedback = LocalHapticFeedback.current
         val lazyCalendarData = calendarViewModel.getCalendarData().collectAsLazyPagingItems()
         LazyColumn(state = listState, modifier = Modifier.fillMaxWidth()) {
             itemsIndexed(items = lazyCalendarData, itemContent = { _, value ->
@@ -115,22 +131,40 @@ class VerticalCalendarLibrary {
                             )
                         } ${value.year}",
                         modifier = Modifier.padding(20.dp),
-                        style = textStyleForHeading.copy(fontWeight = FontWeight.Bold)
+                        style = calendarVisualModifications.textStyleForHeading,
+                        textAlign = TextAlign.Center
                     )
-                    PopulateCalendar(value = value, textStyleForBody)
+                    PopulateCalendar(
+                        value = value,
+                        selectedDate,
+                        hapticFeedback,
+                        calendarDates,
+                        calendarVisualModifications,
+                        onClick = {
+                            selectedDate = it
+                            onClick.invoke()
+                        }
+                    )
                 }
             })
         }
     }
 
     @Composable
-    private fun PopulateCalendar(value: LocalDate, textStyleForBody: TextStyle) {
+    private fun PopulateCalendar(
+        value: LocalDate,
+        selectedDate: LocalDate,
+        hapticFeedback: HapticFeedback,
+        calendarDates: Collection<CalendarDay>?,
+        calendarVisualModifications: CalendarVisualModifications,
+        onClick: (selectedDate: LocalDate) -> Unit
+    ) {
         val dates = ArrayList<LocalDate>()
         for (i in 1..value.lengthOfMonth()) {
             dates.add(value.withDayOfMonth(i))
         }
-        val collectionOfHashMaps = ArrayList<HashMap<WeekDayEnum, Int>>()
-        var hashMap = HashMap<WeekDayEnum, Int>()
+        val collectionOfHashMaps = ArrayList<HashMap<WeekDayEnum, LocalDate>>()
+        var hashMap = HashMap<WeekDayEnum, LocalDate>()
         dates.forEachIndexed { i, date ->
             populateHashMap(hashMap, date) { weekDayHashMap ->
                 if (date.dayOfWeek.value == weekDayEnd.index || i == dates.size - 1)
@@ -139,21 +173,61 @@ class VerticalCalendarLibrary {
         }
         collectionOfHashMaps.forEach { weekDayHashMap ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceAround
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 7.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 WeekDayEnum.values().forEach {
                     if (weekDayHashMap[it] == null)
                         Spacer(modifier = Modifier.size(cellSize))
-                    else
-                        Text(
-                            "${weekDayHashMap[it]}",
-                            style = textStyleForBody.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 12.sp,
+                    else {
+                        val today = weekDayHashMap[it] == LocalDate.now()
+                        val modifier = Modifier
+                            .size(cellSize)
+                            .background(
+                                color = if (selectedDate == weekDayHashMap[it]) calendarVisualModifications.todayBackgroundColor else Color.Transparent,
+                                CircleShape
+                            )
+                            .padding(top = 8.dp)
+                            .clickable(MutableInteractionSource(), null) {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                onClick.invoke(weekDayHashMap[it]!!)
+                            }
+                        if (calendarDates == null)
+                            Text(
+                                "${weekDayHashMap[it]?.dayOfMonth}",
+                                style = calendarVisualModifications.textStyleForBody.copy(
+                                    color = if (selectedDate == weekDayHashMap[it]) Color.White else if (today) calendarVisualModifications.textStyleForToday.color else calendarVisualModifications.textStyleForBody.color
+                                ),
+                                modifier = modifier,
+                                textAlign = TextAlign.Center,
+                            )
+                        else {
+                            var isPopulated = false
+                            calendarDates.forEach CalendarDates@{ calendarDate ->
+                                if (calendarDate.date == weekDayHashMap[it]) {
+                                    isPopulated = true
+                                    return@CalendarDates
+                                }
+                            }
+                            Text(
+                                "${weekDayHashMap[it]?.dayOfMonth}",
+                                style = when {
+                                    selectedDate == weekDayHashMap[it] -> calendarVisualModifications.textStyleForBody.copy(
+                                        color = Color.White
+                                    )
+                                    today -> calendarVisualModifications.textStyleForToday
+                                    isPopulated -> calendarVisualModifications.textStyleForSelectedDays
+                                    else -> calendarVisualModifications.textStyleForBody
+                                },
+                                modifier = modifier,
                                 textAlign = TextAlign.Center
-                            ), modifier = Modifier.size(cellSize)
-                        )
+                            )
+                        }
+
+                    }
                 }
 
             }
@@ -161,21 +235,21 @@ class VerticalCalendarLibrary {
     }
 
     private inline fun populateHashMap(
-        weekDayHashmap: HashMap<WeekDayEnum, Int>,
+        weekDayHashmap: HashMap<WeekDayEnum, LocalDate>,
         localDate: LocalDate,
-        returningHashMap: (weekDayHashMap: HashMap<WeekDayEnum, Int>) -> Unit
+        returningHashMap: (weekDayHashMap: HashMap<WeekDayEnum, LocalDate>) -> Unit
     ) {
         when (localDate.dayOfWeek.value) {
-            WeekDayEnum.MONDAY.index -> weekDayHashmap[WeekDayEnum.MONDAY] = localDate.dayOfMonth
-            WeekDayEnum.TUESDAY.index -> weekDayHashmap[WeekDayEnum.TUESDAY] = localDate.dayOfMonth
+            WeekDayEnum.MONDAY.index -> weekDayHashmap[WeekDayEnum.MONDAY] = localDate
+            WeekDayEnum.TUESDAY.index -> weekDayHashmap[WeekDayEnum.TUESDAY] = localDate
             WeekDayEnum.WEDNESDAY.index -> weekDayHashmap[WeekDayEnum.WEDNESDAY] =
-                localDate.dayOfMonth
+                localDate
             WeekDayEnum.THURSDAY.index -> weekDayHashmap[WeekDayEnum.THURSDAY] =
-                localDate.dayOfMonth
-            WeekDayEnum.FRIDAY.index -> weekDayHashmap[WeekDayEnum.FRIDAY] = localDate.dayOfMonth
+                localDate
+            WeekDayEnum.FRIDAY.index -> weekDayHashmap[WeekDayEnum.FRIDAY] = localDate
             WeekDayEnum.SATURDAY.index -> weekDayHashmap[WeekDayEnum.SATURDAY] =
-                localDate.dayOfMonth
-            WeekDayEnum.SUNDAY.index -> weekDayHashmap[WeekDayEnum.SUNDAY] = localDate.dayOfMonth
+                localDate
+            WeekDayEnum.SUNDAY.index -> weekDayHashmap[WeekDayEnum.SUNDAY] = localDate
         }
         returningHashMap(weekDayHashmap)
     }
