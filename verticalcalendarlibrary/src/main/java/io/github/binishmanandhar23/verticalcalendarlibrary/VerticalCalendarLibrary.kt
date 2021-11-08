@@ -32,6 +32,8 @@ import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarVisualM
 import io.github.binishmanandhar23.verticalcalendarlibrary.repository.CalendarPagingRepo
 import io.github.binishmanandhar23.verticalcalendarlibrary.repository.CalendarPagingRepoV2
 import io.github.binishmanandhar23.verticalcalendarlibrary.viewmodel.CalendarViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import org.threeten.bp.LocalDate
 import java.util.*
 import kotlin.collections.ArrayList
@@ -68,7 +70,10 @@ class VerticalCalendarLibrary {
         this.weekDayEnd = weekDayEnd
         this.days = listOfDays
         val calendarPagingRepo = CalendarPagingRepo(startingMonthFromCurrentMonth)
-        val calendarViewModel = CalendarViewModel(calendarPagingRepo = calendarPagingRepo, calendarPagingRepoV2 = CalendarPagingRepoV2())
+        val calendarViewModel = CalendarViewModel(
+            calendarPagingRepo = calendarPagingRepo,
+            calendarPagingRepoV2 = CalendarPagingRepoV2()
+        )
 
         Column {
             TopHeader(listState = listState, calendarVisualModifications)
@@ -165,30 +170,33 @@ class VerticalCalendarLibrary {
         var selectedDate: LocalDate by remember { mutableStateOf(LocalDate.now()) }
         val hapticFeedback = LocalHapticFeedback.current
         val calendarData = calendarViewModel.getCalendarDataV2()?.observeAsState()
+        LaunchedEffect(key1 = calendarData, block = {
+            listState.scrollToItem(60)
+        })
         LazyColumn(state = listState, modifier = Modifier.fillMaxWidth()) {
-            itemsIndexed(items = calendarData?.value?: ArrayList(), itemContent = { _, value ->
-                    Text(
-                        "${
-                            value.month.getDisplayName(
-                                org.threeten.bp.format.TextStyle.FULL,
-                                Locale.getDefault()
-                            )
-                        } ${value.year}",
-                        modifier = Modifier.padding(20.dp),
-                        style = calendarVisualModifications.textStyleForHeading,
-                        textAlign = TextAlign.Center
-                    )
-                    PopulateCalendar(
-                        value = value,
-                        selectedDate,
-                        hapticFeedback,
-                        calendarDates,
-                        calendarVisualModifications,
-                        onClick = {
-                            selectedDate = it
-                            onClick.invoke()
-                        }
-                    )
+            itemsIndexed(items = calendarData?.value ?: ArrayList(), itemContent = { _, value ->
+                Text(
+                    "${
+                        value.month.getDisplayName(
+                            org.threeten.bp.format.TextStyle.FULL,
+                            Locale.getDefault()
+                        )
+                    } ${value.year}",
+                    modifier = Modifier.padding(20.dp),
+                    style = calendarVisualModifications.textStyleForHeading,
+                    textAlign = TextAlign.Center
+                )
+                PopulateCalendar(
+                    value = value,
+                    selectedDate,
+                    hapticFeedback,
+                    calendarDates,
+                    calendarVisualModifications,
+                    onClick = {
+                        selectedDate = it
+                        onClick.invoke()
+                    }
+                )
             })
         }
     }
@@ -233,7 +241,7 @@ class VerticalCalendarLibrary {
                                 color = if (selectedDate == weekDayHashMap[it]) calendarVisualModifications.todayBackgroundColor else Color.Transparent,
                                 CircleShape
                             )
-                            .padding(top = 8.dp)
+                            .padding(top = 15.dp)
                             .clickable(MutableInteractionSource(), null) {
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onClick.invoke(weekDayHashMap[it]!!)
