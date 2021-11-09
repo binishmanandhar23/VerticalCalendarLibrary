@@ -109,11 +109,6 @@ class MiniCalendarLibrary {
                     )
                 }
             }
-            Divider(
-                color = Color.Gray, thickness = 1.dp, modifier = Modifier
-                    .padding(horizontal = 12.dp)
-                    .alpha(0.5f)
-            )
         }
     }
 
@@ -149,7 +144,7 @@ class MiniCalendarLibrary {
             LazyRow(
                 state = lazyListState, modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 20.dp)
+                    .padding(top = 5.dp)
             ) {
                 items(items = calendarData?.value ?: ArrayList()) { item ->
                     item.with(DayOfWeek.MONDAY)
