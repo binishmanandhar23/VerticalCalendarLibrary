@@ -19,4 +19,17 @@ class CalendarPagingRepoV2 {
         }
         return mutableData
     }
+
+    fun getDatesForMini(): MutableLiveData<ArrayList<LocalDate>>{
+        val mutableData = MutableLiveData<ArrayList<LocalDate>>()
+        MainScope().launch(Dispatchers.IO) {
+            val listOfDates = ArrayList<LocalDate>()
+            val now = LocalDate.now()
+            for(i in -60L..60L){
+                listOfDates.add(now.plusWeeks(i))
+            }
+            mutableData.postValue(listOfDates)
+        }
+        return mutableData
+    }
 }

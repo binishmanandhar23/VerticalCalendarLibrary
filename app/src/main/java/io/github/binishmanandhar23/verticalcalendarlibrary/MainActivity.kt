@@ -14,16 +14,22 @@ import com.jakewharton.threetenabp.AndroidThreeTen
 import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarDay
 import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarVisualModifications
 import io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.VerticalCalendarTheme
+import android.util.DisplayMetrics
+
+
+
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        AndroidThreeTen.init(this);
+        AndroidThreeTen.init(this)
         setContent {
             VerticalCalendarTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background) {
-                    VerticalCalendar()
+                    val displayMetrics: DisplayMetrics = resources.displayMetrics
+                    MiniCalendar(displayMetrics)
                 }
             }
         }
@@ -34,11 +40,25 @@ class MainActivity : ComponentActivity() {
 fun VerticalCalendar() {
     val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
-    var calendarDates: Collection<CalendarDay>? by remember { mutableStateOf(null) }
+    val calendarDates: Collection<CalendarDay>? by remember { mutableStateOf(null) }
     val startingMonthFromCurrentMonth = 60
     VerticalCalendarLibrary().initialize(
         cellSize = 50.dp,
         listState = listState,
+        calendarDates = calendarDates,
+        calendarVisualModifications = CalendarVisualModifications()
+    ) {
+
+    }
+}
+
+@Composable
+fun MiniCalendar(displayMetrics: DisplayMetrics) {
+    /*val dpHeight = displayMetrics.heightPixels / displayMetrics.density*/
+    val dpWidth = displayMetrics.widthPixels / displayMetrics.density
+    val calendarDates: Collection<CalendarDay>? by remember { mutableStateOf(null) }
+    MiniCalendarLibrary().initialize(
+        widthSize = dpWidth.dp,
         calendarDates = calendarDates,
         calendarVisualModifications = CalendarVisualModifications()
     ) {

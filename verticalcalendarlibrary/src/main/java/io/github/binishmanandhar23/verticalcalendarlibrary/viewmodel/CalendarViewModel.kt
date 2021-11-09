@@ -12,4 +12,6 @@ class CalendarViewModel(private val calendarPagingRepo: CalendarPagingRepo, priv
     fun getCalendarData(): Flow<PagingData<LocalDate>> = calendarPagingRepo.getCalendarData()
 
     fun getCalendarDataV2(): MutableLiveData<ArrayList<LocalDate>>? = calendarPagingRepoV2?.getDates()
+
+    fun getCalendarDataV2ForMini(): MutableLiveData<ArrayList<LocalDate>>? = calendarPagingRepoV2?.getDatesForMini()
 }
