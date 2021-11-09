@@ -84,7 +84,10 @@ class VerticalCalendarLibrary {
                 mutableSelectedDate,
                 calendarViewModel,
                 calendarVisualModifications,
-                onClick = onClick
+                onClick = {
+                    mutableSelectedDate.value = it
+                    onClick.invoke(it)
+                }
             )
         }
     }

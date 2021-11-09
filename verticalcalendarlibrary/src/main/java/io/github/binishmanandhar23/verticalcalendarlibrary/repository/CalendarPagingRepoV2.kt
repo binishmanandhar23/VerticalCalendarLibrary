@@ -25,7 +25,7 @@ class CalendarPagingRepoV2 {
         MainScope().launch(Dispatchers.IO) {
             val listOfDates = ArrayList<LocalDate>()
             val now = LocalDate.now()
-            for(i in -60L..60L){
+            for(i in -240L..240L){
                 listOfDates.add(now.plusWeeks(i))
             }
             mutableData.postValue(listOfDates)

@@ -15,8 +15,8 @@ import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarDay
 import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarVisualModifications
 import io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.VerticalCalendarTheme
 import android.util.DisplayMetrics
-
-
+import androidx.lifecycle.MutableLiveData
+import org.threeten.bp.LocalDate
 
 
 class MainActivity : ComponentActivity() {
@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun VerticalCalendar() {
     val listState = rememberLazyListState()
+    val selectedDate = MutableLiveData<LocalDate>(LocalDate.now())
     val coroutineScope = rememberCoroutineScope()
     val calendarDates: Collection<CalendarDay>? by remember { mutableStateOf(null) }
     val startingMonthFromCurrentMonth = 60
@@ -46,7 +47,8 @@ fun VerticalCalendar() {
         cellSize = 50.dp,
         listState = listState,
         calendarDates = calendarDates,
-        calendarVisualModifications = CalendarVisualModifications()
+        calendarVisualModifications = CalendarVisualModifications(),
+        mutableSelectedDate = selectedDate
     ) {
 
     }
@@ -56,11 +58,13 @@ fun VerticalCalendar() {
 fun MiniCalendar(displayMetrics: DisplayMetrics) {
     /*val dpHeight = displayMetrics.heightPixels / displayMetrics.density*/
     val dpWidth = displayMetrics.widthPixels / displayMetrics.density
+    val selectedDate = MutableLiveData<LocalDate>(LocalDate.now())
     val calendarDates: Collection<CalendarDay>? by remember { mutableStateOf(null) }
     MiniCalendarLibrary().initialize(
         widthSize = dpWidth.dp,
         calendarDates = calendarDates,
-        calendarVisualModifications = CalendarVisualModifications()
+        calendarVisualModifications = CalendarVisualModifications(),
+        mutableSelectedDate = selectedDate
     ) {
 
     }
