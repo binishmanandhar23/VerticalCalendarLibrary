@@ -50,6 +50,7 @@ class VerticalCalendarLibrary {
     fun initialize(
         cellSize: Dp,
         listState: LazyListState,
+        mutableSelectedDate: MutableLiveData<LocalDate>,
         calendarDates: Collection<CalendarDay>?,
         startingMonthFromCurrentMonth: Int = 60,
         listOfDays: List<String> = listOf(
@@ -63,7 +64,7 @@ class VerticalCalendarLibrary {
         ),
         weekDayEnd: WeekDayEnum = WeekDayEnum.SUNDAY,
         calendarVisualModifications: CalendarVisualModifications,
-        onClick: () -> Unit
+        onClick: (selectedDate: LocalDate) -> Unit
     ) {
         this.cellSize = cellSize
         this.startingMonthFromCurrentMonth = startingMonthFromCurrentMonth
@@ -80,6 +81,7 @@ class VerticalCalendarLibrary {
             BodyV2(
                 listState = listState,
                 calendarDates,
+                mutableSelectedDate,
                 calendarViewModel,
                 calendarVisualModifications,
                 onClick = onClick
@@ -163,11 +165,12 @@ class VerticalCalendarLibrary {
     fun BodyV2(
         listState: LazyListState,
         calendarDates: Collection<CalendarDay>?,
+        mutableSelectedDate: MutableLiveData<LocalDate>,
         calendarViewModel: CalendarViewModel,
         calendarVisualModifications: CalendarVisualModifications,
-        onClick: () -> Unit
+        onClick: (selectedDate: LocalDate) -> Unit
     ) {
-        var selectedDate: LocalDate by remember { mutableStateOf(LocalDate.now()) }
+        val selectedDate = mutableSelectedDate.observeAsState()
         val hapticFeedback = LocalHapticFeedback.current
         val calendarData = calendarViewModel.getCalendarDataV2()?.observeAsState()
         LaunchedEffect(key1 = calendarData, block = {
@@ -188,13 +191,12 @@ class VerticalCalendarLibrary {
                 )
                 PopulateCalendar(
                     value = value,
-                    selectedDate,
+                    selectedDate.value!!,
                     hapticFeedback,
                     calendarDates,
                     calendarVisualModifications,
                     onClick = {
-                        selectedDate = it
-                        onClick.invoke()
+                        onClick.invoke(it)
                     }
                 )
             })
@@ -241,7 +243,7 @@ class VerticalCalendarLibrary {
                                 color = if (selectedDate == weekDayHashMap[it]) calendarVisualModifications.todayBackgroundColor else Color.Transparent,
                                 CircleShape
                             )
-                            .padding(top = 15.dp)
+                            .padding(top = 8.dp)
                             .clickable(MutableInteractionSource(), null) {
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onClick.invoke(weekDayHashMap[it]!!)
