@@ -1,13 +1,17 @@
 package io.github.binishmanandhar23.verticalcalendarlibrary
 
+import android.util.Log
+import androidx.compose.animation.*
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Divider
 import androidx.compose.material.Text
@@ -22,34 +26,47 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.MutableLiveData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemsIndexed
+import io.github.binishmanandhar23.verticalcalendarlibrary.enum.CalendarType
 import io.github.binishmanandhar23.verticalcalendarlibrary.enum.WeekDayEnum
 import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarDay
 import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarVisualModifications
 import io.github.binishmanandhar23.verticalcalendarlibrary.repository.CalendarPagingRepo
 import io.github.binishmanandhar23.verticalcalendarlibrary.repository.CalendarPagingRepoV2
+import io.github.binishmanandhar23.verticalcalendarlibrary.util.ComposePagerSnapHelper
+import io.github.binishmanandhar23.verticalcalendarlibrary.util.VerticalCalendarUtils
 import io.github.binishmanandhar23.verticalcalendarlibrary.viewmodel.CalendarViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import org.threeten.bp.DayOfWeek
 import org.threeten.bp.LocalDate
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
 class VerticalCalendarLibrary {
+    var widthSize = 320.dp
+    var miniCalendarListState: LazyListState? = null
+
+    var scrollToIndexForExpandedCalendar = 60
+    var scrollToIndexForMiniCalendar = 240
+
     var cellSize = 30.dp
     var startingMonthFromCurrentMonth = 60
     var weekDayEnd: WeekDayEnum = WeekDayEnum.SUNDAY
-    val scroll = MutableLiveData(false)
     lateinit var days: List<String>
+    private val calendarType = MutableLiveData(CalendarType.MINI)
 
+    @OptIn(ExperimentalAnimationApi::class)
     @Composable
     fun initialize(
         cellSize: Dp,
         listState: LazyListState,
+        coroutineScope: CoroutineScope,
         mutableSelectedDate: MutableLiveData<LocalDate>,
         calendarDates: Collection<CalendarDay>?,
         startingMonthFromCurrentMonth: Int = 60,
@@ -63,39 +80,84 @@ class VerticalCalendarLibrary {
             "Sun"
         ),
         weekDayEnd: WeekDayEnum = WeekDayEnum.SUNDAY,
+        widthSize: Dp,
         calendarVisualModifications: CalendarVisualModifications,
+        calendarType: CalendarType,
         onClick: (selectedDate: LocalDate) -> Unit
     ) {
         this.cellSize = cellSize
         this.startingMonthFromCurrentMonth = startingMonthFromCurrentMonth
         this.weekDayEnd = weekDayEnd
         this.days = listOfDays
+        this.widthSize = widthSize
         val calendarPagingRepo = CalendarPagingRepo(startingMonthFromCurrentMonth)
+        val selectedDateInState = mutableSelectedDate.observeAsState()
+        val calendarTypeState = this.calendarType.observeAsState(calendarType)
         val calendarViewModel = CalendarViewModel(
             calendarPagingRepo = calendarPagingRepo,
             calendarPagingRepoV2 = CalendarPagingRepoV2()
         )
 
         Column {
-            TopHeader(listState = listState, calendarVisualModifications)
-            BodyV2(
-                listState = listState,
-                calendarDates,
-                mutableSelectedDate,
-                calendarViewModel,
-                calendarVisualModifications,
-                onClick = {
-                    mutableSelectedDate.value = it
-                    onClick.invoke(it)
+            TopHeader(listState = listState, calendarVisualModifications, calendarTypeState.value)
+            AnimatedContent(targetState = calendarTypeState.value, transitionSpec = {
+                fadeIn(animationSpec = tween(300, 150)) with
+                        fadeOut(animationSpec = tween(300)) using
+                        SizeTransform { initialSize, targetSize ->
+                            if (targetState == CalendarType.FULL) {
+                                keyframes {
+                                    // Expand horizontally first.
+                                    IntSize(targetSize.width, initialSize.height) at 250
+                                    durationMillis = 300
+                                }
+                            } else {
+                                keyframes {
+                                    // Shrink vertically first.
+                                    IntSize(initialSize.width, targetSize.height) at 250
+                                    durationMillis = 300
+                                }
+                            }
+                        }
+            }) { value ->
+                if (CalendarType.FULL == value) {
+                    scrollToIndexForExpandedCalendar = VerticalCalendarUtils.getMonthIndex(selectedDateInState.value!!)
+                    BodyV2(
+                        listState = listState,
+                        calendarDates,
+                        selectedDateInState,
+                        coroutineScope,
+                        calendarViewModel,
+                        calendarVisualModifications,
+                        calendarTypeState,
+                        onClick = {
+                            mutableSelectedDate.value = it
+                            onClick.invoke(it)
+                        }
+                    )
+                }else {
+                    scrollToIndexForMiniCalendar = VerticalCalendarUtils.getWeekIndex(selectedDateInState.value!!)
+                    MiniCalendarBody(
+                        calendarDates = calendarDates,
+                        calendarViewModel,
+                        selectedDateInState,
+                        coroutineScope,
+                        calendarVisualModifications,
+                        calendarTypeState,
+                        onClick = {
+                            mutableSelectedDate.value = it
+                            onClick.invoke(it)
+                        })
                 }
-            )
+            }
         }
     }
 
+    @OptIn(ExperimentalAnimationApi::class)
     @Composable
     fun TopHeader(
         listState: LazyListState,
-        calendarVisualModifications: CalendarVisualModifications
+        calendarVisualModifications: CalendarVisualModifications,
+        calendarType: CalendarType
     ) {
         Column {
             Row(
@@ -112,11 +174,14 @@ class VerticalCalendarLibrary {
                     )
                 }
             }
-            Divider(
-                color = Color.Gray, thickness = 1.dp, modifier = Modifier
-                    .padding(horizontal = 12.dp)
-                    .alpha(0.5f)
-            )
+            AnimatedVisibility(visible = calendarType == CalendarType.FULL) {
+                Divider(
+                    color = Color.Gray, thickness = 1.dp, modifier = Modifier
+                        .padding(horizontal = 12.dp)
+                        .alpha(0.5f)
+                )
+            }
+
         }
     }
 
@@ -168,16 +233,17 @@ class VerticalCalendarLibrary {
     fun BodyV2(
         listState: LazyListState,
         calendarDates: Collection<CalendarDay>?,
-        mutableSelectedDate: MutableLiveData<LocalDate>,
+        selectedDate: State<LocalDate?>,
+        coroutineScope: CoroutineScope,
         calendarViewModel: CalendarViewModel,
         calendarVisualModifications: CalendarVisualModifications,
+        calendarType: State<CalendarType>,
         onClick: (selectedDate: LocalDate) -> Unit
     ) {
-        val selectedDate = mutableSelectedDate.observeAsState()
         val hapticFeedback = LocalHapticFeedback.current
         val calendarData = calendarViewModel.getCalendarDataV2()?.observeAsState()
         LaunchedEffect(key1 = calendarData, block = {
-            listState.scrollToItem(60)
+            listState.scrollToItem(scrollToIndexForExpandedCalendar)
         })
         LazyColumn(state = listState, modifier = Modifier.fillMaxWidth()) {
             itemsIndexed(items = calendarData?.value ?: ArrayList(), itemContent = { _, value ->
@@ -204,6 +270,7 @@ class VerticalCalendarLibrary {
                 )
             })
         }
+
     }
 
     @Composable
@@ -241,12 +308,12 @@ class VerticalCalendarLibrary {
                     else {
                         val today = weekDayHashMap[it] == LocalDate.now()
                         val modifier = Modifier
-                            .size(cellSize)
                             .background(
                                 color = if (selectedDate == weekDayHashMap[it]) calendarVisualModifications.todayBackgroundColor else Color.Transparent,
                                 CircleShape
                             )
-                            .padding(top = 8.dp)
+                            .size(cellSize)
+                            .wrapContentSize(Alignment.Center)
                             .clickable(MutableInteractionSource(), null) {
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                 onClick.invoke(weekDayHashMap[it]!!)
@@ -308,5 +375,168 @@ class VerticalCalendarLibrary {
             WeekDayEnum.SUNDAY.index -> weekDayHashmap[WeekDayEnum.SUNDAY] = localDate
         }
         returningHashMap(weekDayHashmap)
+    }
+
+    @Composable
+    fun MiniCalendarBody(
+        calendarDates: Collection<CalendarDay>?,
+        calendarViewModel: CalendarViewModel,
+        selectedDate: State<LocalDate?>,
+        coroutineScope: CoroutineScope,
+        calendarVisualModifications: CalendarVisualModifications,
+        calendarType: State<CalendarType>,
+        onClick: (selectedDate: LocalDate) -> Unit
+    ) {
+        var previousSelectedIndex = 240
+        val hapticFeedback = LocalHapticFeedback.current
+        val calendarData = calendarViewModel.getCalendarDataV2ForMini()?.observeAsState()
+
+        LaunchedEffect(key1 = calendarData, block = {
+            miniCalendarListState?.scrollToItem(scrollToIndexForMiniCalendar)
+        })
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            ComposePagerSnapHelper(widthSize) { lazyListState ->
+                this@VerticalCalendarLibrary.miniCalendarListState = lazyListState
+                val visibleIndex = lazyListState.firstVisibleItemIndex
+                if (visibleIndex != previousSelectedIndex && !lazyListState.isScrollInProgress) {
+                    calendarData?.value?.let {
+                        selectedDate.value?.dayOfWeek?.value?.let { value ->
+                            val visibleMonday = it[visibleIndex].with(DayOfWeek.MONDAY)
+                            val difference =
+                                value - visibleMonday.dayOfWeek.value
+                            val newSelectedDate = visibleMonday.plusDays((difference).toLong())
+                            onClick.invoke(newSelectedDate)
+                        }
+                    }
+                    previousSelectedIndex = lazyListState.firstVisibleItemIndex
+                }
+                LazyRow(
+                    state = lazyListState, modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 5.dp)
+                ) {
+                    items(items = calendarData?.value ?: ArrayList()) { item ->
+                        item.with(DayOfWeek.MONDAY)
+                        Row(
+                            modifier = Modifier.width(widthSize),
+                            horizontalArrangement = Arrangement.SpaceAround
+                        ) {
+                            PopulateDates(
+                                date = item.with(DayOfWeek.MONDAY),
+                                calendarDates = calendarDates,
+                                selectedDate = selectedDate.value!!,
+                                hapticFeedback = hapticFeedback,
+                                calendarVisualModifications = calendarVisualModifications,
+                                onClick = onClick
+                            )
+                            PopulateDates(
+                                date = item.with(DayOfWeek.TUESDAY),
+                                calendarDates = calendarDates,
+                                selectedDate = selectedDate.value!!,
+                                hapticFeedback = hapticFeedback,
+                                calendarVisualModifications = calendarVisualModifications,
+                                onClick = onClick
+                            )
+                            PopulateDates(
+                                date = item.with(DayOfWeek.WEDNESDAY),
+                                calendarDates = calendarDates,
+                                selectedDate = selectedDate.value!!,
+                                hapticFeedback = hapticFeedback,
+                                calendarVisualModifications = calendarVisualModifications,
+                                onClick = onClick
+                            )
+                            PopulateDates(
+                                date = item.with(DayOfWeek.THURSDAY),
+                                calendarDates = calendarDates,
+                                selectedDate = selectedDate.value!!,
+                                hapticFeedback = hapticFeedback,
+                                calendarVisualModifications = calendarVisualModifications,
+                                onClick = onClick
+                            )
+                            PopulateDates(
+                                date = item.with(DayOfWeek.FRIDAY),
+                                calendarDates = calendarDates,
+                                selectedDate = selectedDate.value!!,
+                                hapticFeedback = hapticFeedback,
+                                calendarVisualModifications = calendarVisualModifications,
+                                onClick = onClick
+                            )
+                            PopulateDates(
+                                date = item.with(DayOfWeek.SATURDAY),
+                                calendarDates = calendarDates,
+                                selectedDate = selectedDate.value!!,
+                                hapticFeedback = hapticFeedback,
+                                calendarVisualModifications = calendarVisualModifications,
+                                onClick = onClick
+                            )
+                            PopulateDates(
+                                date = item.with(DayOfWeek.SUNDAY),
+                                calendarDates = calendarDates,
+                                selectedDate = selectedDate.value!!,
+                                hapticFeedback = hapticFeedback,
+                                calendarVisualModifications = calendarVisualModifications,
+                                onClick = onClick
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun PopulateDates(
+        date: LocalDate,
+        calendarDates: Collection<CalendarDay>?,
+        selectedDate: LocalDate,
+        hapticFeedback: HapticFeedback,
+        calendarVisualModifications: CalendarVisualModifications,
+        onClick: (selectedDate: LocalDate) -> Unit
+    ) {
+        val today = date == LocalDate.now()
+        val modifier = Modifier
+            .background(
+                color = if (selectedDate == date) calendarVisualModifications.todayBackgroundColor else Color.Transparent,
+                CircleShape
+            )
+            .size(cellSize)
+            .wrapContentSize(
+                Alignment.Center
+            )
+            .clickable(MutableInteractionSource(), null) {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                onClick.invoke(date)
+            }
+        if (calendarDates == null)
+            Text(
+                "${date.dayOfMonth}",
+                style = calendarVisualModifications.textStyleForBody.copy(
+                    color = if (selectedDate == date) Color.White else if (today) calendarVisualModifications.textStyleForToday.color else calendarVisualModifications.textStyleForBody.color
+                ),
+                modifier = modifier,
+                textAlign = TextAlign.Center,
+            )
+        else {
+            var isPopulated = false
+            calendarDates.forEach CalendarDates@{ calendarDate ->
+                if (calendarDate.date == date) {
+                    isPopulated = true
+                    return@CalendarDates
+                }
+            }
+            Text(
+                "${date.dayOfMonth}",
+                style = when {
+                    selectedDate == date -> calendarVisualModifications.textStyleForBody.copy(
+                        color = Color.White
+                    )
+                    today -> calendarVisualModifications.textStyleForToday
+                    isPopulated -> calendarVisualModifications.textStyleForSelectedDays
+                    else -> calendarVisualModifications.textStyleForBody
+                },
+                modifier = modifier,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }

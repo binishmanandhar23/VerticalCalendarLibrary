@@ -16,6 +16,7 @@ import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarVisualM
 import io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.VerticalCalendarTheme
 import android.util.DisplayMetrics
 import androidx.lifecycle.MutableLiveData
+import io.github.binishmanandhar23.verticalcalendarlibrary.enum.CalendarType
 import org.threeten.bp.LocalDate
 
 
@@ -29,7 +30,7 @@ class MainActivity : ComponentActivity() {
                 // A surface container using the 'background' color from the theme
                 Surface(color = MaterialTheme.colors.background) {
                     val displayMetrics: DisplayMetrics = resources.displayMetrics
-                    MiniCalendar(displayMetrics)
+                    VerticalCalendar(displayMetrics)
                 }
             }
         }
@@ -37,43 +38,24 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun VerticalCalendar() {
+fun VerticalCalendar(displayMetrics: DisplayMetrics) {
     val listState = rememberLazyListState()
-    val selectedDate = MutableLiveData<LocalDate>(LocalDate.now())
+    val selectedDate = MutableLiveData(LocalDate.now())
     val coroutineScope = rememberCoroutineScope()
     val calendarDates: Collection<CalendarDay>? by remember { mutableStateOf(null) }
     val startingMonthFromCurrentMonth = 60
+    /*val dpHeight = displayMetrics.heightPixels / displayMetrics.density*/
+    val dpWidth = displayMetrics.widthPixels / displayMetrics.density
     VerticalCalendarLibrary().initialize(
         cellSize = 50.dp,
         listState = listState,
         calendarDates = calendarDates,
         calendarVisualModifications = CalendarVisualModifications(),
-        mutableSelectedDate = selectedDate
-    ) {
-
-    }
-}
-
-@Composable
-fun MiniCalendar(displayMetrics: DisplayMetrics) {
-    /*val dpHeight = displayMetrics.heightPixels / displayMetrics.density*/
-    val dpWidth = displayMetrics.widthPixels / displayMetrics.density
-    val selectedDate = MutableLiveData<LocalDate>(LocalDate.now())
-    val calendarDates: Collection<CalendarDay>? by remember { mutableStateOf(null) }
-    MiniCalendarLibrary().initialize(
+        mutableSelectedDate = selectedDate,
         widthSize = dpWidth.dp,
-        calendarDates = calendarDates,
-        calendarVisualModifications = CalendarVisualModifications(),
-        mutableSelectedDate = selectedDate
+        calendarType = CalendarType.MINI,
+        coroutineScope = coroutineScope,
     ) {
 
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    VerticalCalendarTheme {
-        VerticalCalendar()
     }
 }
