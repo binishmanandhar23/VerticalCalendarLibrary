@@ -1,2 +1,2 @@
 # VerticalCalendarLibrary
-Vertical Calendar for Bonzun IVF
+Vertical Calendar library for Bonzun IVF
