@@ -7,15 +7,15 @@ import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 
 private val DarkColorPalette = darkColors(
-    primary = Purple200,
-    primaryVariant = Purple700,
-    secondary = Teal200
+    primary = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Purple200,
+    primaryVariant = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Purple700,
+    secondary = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Teal200
 )
 
 private val LightColorPalette = lightColors(
-    primary = Purple500,
-    primaryVariant = Purple700,
-    secondary = Teal200
+    primary = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Purple500,
+    primaryVariant = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Purple700,
+    secondary = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Teal200
 
     /* Other default colors to override
     background = Color.White,
@@ -30,7 +30,7 @@ private val LightColorPalette = lightColors(
 @Composable
 fun VerticalCalendarTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
+    content: @Composable() () -> Unit
 ) {
     val colors = if (darkTheme) {
         DarkColorPalette
@@ -40,8 +40,8 @@ fun VerticalCalendarTheme(
 
     MaterialTheme(
         colors = colors,
-        typography = Typography,
-        shapes = Shapes,
+        typography = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Typography,
+        shapes = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Shapes,
         content = content
     )
 }
