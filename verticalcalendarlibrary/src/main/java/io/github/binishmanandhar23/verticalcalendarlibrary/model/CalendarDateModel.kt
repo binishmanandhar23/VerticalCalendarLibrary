@@ -1,4 +1,4 @@
-package io.github.binishmanandhar23.verticalcalendar.model
+package io.github.binishmanandhar23.verticalcalendarlibrary.model
 
 class CalendarDateModel(yearParam: Int, monthParam: Int, dateParam: Int) {
     var dateInString: String? = dateParam.toString()

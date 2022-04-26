@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">VerticalCalendarLibrary</string>
+    <string name="title_activity_main_compose">MainActivityCompose</string>
 </resources>
