@@ -1,9 +1,7 @@
 # VerticalCalendarLibrary
-Vertical Calendar library originally made for Bonzun IVF using **Jetpack Compose**
+Vertical Calendar library originally made for **Bonzun IVF** using **Jetpack Compose**
 
 ![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg)
-
-Helps you add Stickers, Texts, Images & Emoji's over images and customize them
 
 ## Installation
 
