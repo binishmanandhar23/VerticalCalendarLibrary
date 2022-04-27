@@ -47,15 +47,22 @@ AndroidThreeTen.init(application) // VERY IMPORTANT
 ```
 
 
-## Setting up the View
-First we need to add `PhotoEditorView` in out xml layout
+## Setting up the Calendar
+To initialize the Calendar View
 
-```xml
-<com.binish.photoeditorx.photoeditor.PhotoEditorView
-        android:id="@+id/photoEditorView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:photo_src="@drawable/nepal_wallpaper"/>
+# Simple initialization
+```kotlin
+            VerticalCalendarLibrary().initialize(
+                listState = rememberLazyListState(),
+                mutableSelectedDate = MutableLiveData(LocalDate.now()), // Current selected date
+                calendarDates = PopulatingData(
+                    listOf(PopulatingData()), //Pass dates that have events along with a Modifier to be used in designing indicators for the dates
+                    highlightedDates = Collection<CalendarDay> //Pass dates that are to be highlighted
+                ),
+                fullCalendarHeight = LocalContext.current.getDeviceFullHeight().dp, // Height for the calendar when it's in Full mode
+                calendarTypeState = calendarType, //There are two types: CalendarType.FULL & CalendarType.MINI
+                calendarVisualModifications = CalendarVisualModifications() // Various types of visual modifications for the Calendar
+            )
 ```
 
 We can define our drawable or color resource directly using `app:photo_src`
