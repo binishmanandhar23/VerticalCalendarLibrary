@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
@@ -41,9 +42,11 @@ import io.github.binishmanandhar23.verticalcalendarlibrary.util.ComposePagerSnap
 import io.github.binishmanandhar23.verticalcalendarlibrary.util.VerticalCalendarUtils
 import io.github.binishmanandhar23.verticalcalendarlibrary.util.VerticalCalendarUtils.NUMBEROFMONTHS
 import io.github.binishmanandhar23.verticalcalendarlibrary.util.VerticalCalendarUtils.NUMBEROFWEEKS
+import io.github.binishmanandhar23.verticalcalendarlibrary.util.VerticalCalendarUtils.getDeviceFullHeight
+import io.github.binishmanandhar23.verticalcalendarlibrary.util.VerticalCalendarUtils.getDeviceFullWidth
+import io.github.binishmanandhar23.verticalcalendarlibrary.util.VerticalCalendarUtils.isHighlighted
 import io.github.binishmanandhar23.verticalcalendarlibrary.viewmodel.CalendarViewModel
 import io.iamjosephmj.flinger.bahaviours.StockFlingBehaviours
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
@@ -83,8 +86,8 @@ class VerticalCalendarLibrary {
             "Sun"
         ),
         weekDayEnd: WeekDayEnum = WeekDayEnum.SUNDAY,
-        widthSize: Dp = 320.dp,
-        fullCalendarHeight: Dp,
+        widthSize: Dp = LocalContext.current.getDeviceFullWidth().dp,
+        fullCalendarHeight: Dp = LocalContext.current.getDeviceFullHeight().dp,
         calendarVisualModifications: CalendarVisualModifications = CalendarVisualModifications(),
         calendarTypeState: CalendarType = CalendarType.FULL,
         onClickInitiatedFrom: MutableLiveData<CalendarType> = MutableLiveData(CalendarType.FULL),
@@ -104,7 +107,12 @@ class VerticalCalendarLibrary {
         )
 
         Column {
-            TopHeader(listState = listState, calendarVisualModifications, calendarTypeState)
+            TopHeader(
+                listState = listState,
+                calendarVisualModifications,
+                calendarTypeState,
+                addDivider = calendarVisualModifications.addDivider
+            )
             AnimatedContent(targetState = calendarTypeState, transitionSpec = {
                 fadeIn(animationSpec = tween(300, 150)) with
                         fadeOut(animationSpec = tween(300)) using
@@ -466,7 +474,8 @@ class VerticalCalendarLibrary {
                 }
                 LazyRow(
                     state = lazyListState, modifier = Modifier
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .padding(top = calendarVisualModifications.weekDaysPaddingForMiniCalendar),
                     flingBehavior = StockFlingBehaviours.getAndroidNativeScroll()
                 ) {
                     items(items = calendarData?.value ?: ArrayList()) { item ->
@@ -621,17 +630,23 @@ class VerticalCalendarLibrary {
                     modifier = modifier,
                     textAlign = TextAlign.Center
                 )
-                if (calendarVisualModifications.highlightImageId != null && calendarDates.highlightedDates?.contains(
-                        CalendarDay.from(date)!!
-                    ) == true
+                if (calendarVisualModifications.highlightImagePainter != null && isHighlighted(
+                        calendarDates.highlightedDates,
+                        date
+                    )
                 )
                     Image(
-                        painterResource(id = calendarVisualModifications.highlightImageId!!),
+                        calendarVisualModifications.highlightImagePainter!!,
                         contentDescription = "Highlighted",
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .size(8.dp)
-                            .offset(x = (-5).dp, y = 5.dp)
+                            .offset(x = if (date?.dayOfMonth.let {
+                                    if (it == null)
+                                        true
+                                    else
+                                        it < 10
+                                }) 1.dp else 5.dp, y = 1.dp)
                     )
             }
             IndicatorDesign(

@@ -1,5 +1,6 @@
 package io.github.binishmanandhar23.verticalcalendarlibrary.util
 
+import android.content.Context
 import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarDay
 import io.github.binishmanandhar23.verticalcalendarlibrary.model.PopulatingData
 import org.threeten.bp.DayOfWeek
@@ -33,12 +34,23 @@ object VerticalCalendarUtils {
         return (NUMBEROFWEEKS + difference).toInt()
     }
 
+    fun Context.getDeviceFullWidth(): Int = this.resources.displayMetrics.let { (it.widthPixels / it.density).toInt() }
+    fun Context.getDeviceFullHeight(): Int = this.resources.displayMetrics.let { (it.heightPixels / it.density).toInt() }
+
     fun isPopulated(calendarDates: List<PopulatingData.IndividualData>?, currentDate: LocalDate?): Boolean{
         calendarDates?.forEach {
             it.populatedDate.forEach { calendarDay ->
                 if(calendarDay.date == currentDate)
                     return true
             }
+        }
+        return false
+    }
+
+    fun isHighlighted(calendarDates: Collection<CalendarDay>?, currentDate: LocalDate?): Boolean {
+        calendarDates?.forEach {
+            if (it.date == currentDate)
+                return true
         }
         return false
     }

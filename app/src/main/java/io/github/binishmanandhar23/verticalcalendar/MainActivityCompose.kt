@@ -153,9 +153,10 @@ class MainActivityCompose : ComponentActivity() {
                                 .background(
                                     VerticalCalendarAppUtils.getSecondIndicatorColorBasedOnTheme(),
                                     CircleShape
-                                )
+                                ),
                         )
-                    )
+                    ),
+                    highlightedDates = getDummyCalendarData(IntRange(1, 5))
                 ),
                 fullCalendarHeight = LocalContext.current.getDeviceFullHeight().dp,
                 calendarTypeState = calendarType,
@@ -165,6 +166,8 @@ class MainActivityCompose : ComponentActivity() {
                             color = if (isSystemInDarkTheme()) Color.Yellow else Color.DarkGray,
                             fontSize = 10.sp
                         )
+
+                    highlightImagePainter = painterResource(id = R.drawable.ic_highlight)
                 }
             )
             FloatingActionButton(
