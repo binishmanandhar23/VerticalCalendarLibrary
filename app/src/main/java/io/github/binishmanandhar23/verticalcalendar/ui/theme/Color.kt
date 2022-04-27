@@ -13,3 +13,6 @@ val IndicatorLightColor = Color(0xFF05ECD6)
 
 val IndicatorSecondDarkColor = Color(0xFF4C1DDB)
 val IndicatorSecondLightColor = Color(0xFF9CEB6A)
+
+val TextColorForDarkTheme = Color(0xFF000706)
+val TextColorForLightTheme = Color(0xFF05ECD6)
