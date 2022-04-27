@@ -1,5 +1,5 @@
 # VerticalCalendarLibrary
-Vertical Calendar library originally made for Bonzun IVF
+Vertical Calendar library originally made for Bonzun IVF using Jetpack Compose
 
 [ ![Download](https://api.bintray.com/packages/binishmanandhar23/PhotoEditorX/com.binish.photoeditorx/images/download.svg?version=1.0.5) ](https://bintray.com/binishmanandhar23/PhotoEditorX/com.binish.photoeditorx/1.0.5/link) ![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg)
 
@@ -11,14 +11,14 @@ Add the following dependencies in the gradle file of your app module to get star
 
 Gradle
 ```kotlin
-implementation 'io.github.binishmanandhar23.photoeditorx:photoeditorx:1.0.5'
+implementation 'com.github.binishmanandhar23:verticalcalendarlibrary:1.0.0'
 ```
 Maven
 ```xml
 <dependency>
-  <groupId>io.github.binishmanandhar23.photoeditorx</groupId>
-  <artifactId>photoeditorx</artifactId>
-  <version>1.0.5</version>
+  <groupId>com.github.binishmanandhar23:verticalcalendarlibrary:1.0.0</groupId>
+  <artifactId>verticalcalendarlibrary</artifactId>
+  <version>1.0.0</version>
   <type>pom</type>
 </dependency>
 ```
