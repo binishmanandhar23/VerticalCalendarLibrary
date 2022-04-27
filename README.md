@@ -1,7 +1,7 @@
 # VerticalCalendarLibrary
 Vertical Calendar library originally made for Bonzun IVF using **Jetpack Compose**
 
-[ ![Download](https://api.bintray.com/packages/binishmanandhar23/PhotoEditorX/com.binish.photoeditorx/images/download.svg?version=1.0.5) ](https://bintray.com/binishmanandhar23/PhotoEditorX/com.binish.photoeditorx/1.0.5/link) ![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg)
+![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg)
 
 Helps you add Stickers, Texts, Images & Emoji's over images and customize them
 
