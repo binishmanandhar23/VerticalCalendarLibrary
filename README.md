@@ -88,6 +88,18 @@ compose_view.setContent{
 }
 ```
 
+## Parameters
+```kotlin
+data class PopulatingData(val collectionOfDates: List<IndividualData>? = null, val highlightedDates: Collection<CalendarDay>? = null)
+```
+`PopulatingData` takes a list of `IndividualData` object along with collection of `CalendarDay` object for Highlighting certain dates.
+```kotlin
+data class IndividualData(val populatedDate: Collection<CalendarDay> = emptyList(), val customModifier: Modifier = Modifier)
+```
+`IndividualData` takes a collection of dates for indicating events along with a custom modifier for customizing the indicator
+
+**For reference, examples are in the VerticalCalendar app**
+
 ## Necessary Parameters
 `onClickInitiatedFrom` is necessary for mitigating date selection issue when communicating between multiple calendars. (As can be seen in Multi-mode of the example app)
 
