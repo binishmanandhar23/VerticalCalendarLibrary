@@ -36,7 +36,7 @@ Maven
 
 or if you want to further customize the module, simply import it.
 
-##Initial Setup
+## Initial Setup
 I'm using org.threeten.bp library for working with dates which is why the library must be initialized in the Application file or your MainActivity's **onCreate()** before accessing the threeten library files
 ```kotlin
 AndroidThreeTen.init(context) // VERY IMPORTANT
