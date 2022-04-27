@@ -1,5 +1,5 @@
 # VerticalCalendarLibrary
-Vertical Calendar library originally made for Bonzun IVF using Jetpack Compose
+Vertical Calendar library originally made for Bonzun IVF using **Jetpack Compose**
 
 [ ![Download](https://api.bintray.com/packages/binishmanandhar23/PhotoEditorX/com.binish.photoeditorx/images/download.svg?version=1.0.5) ](https://bintray.com/binishmanandhar23/PhotoEditorX/com.binish.photoeditorx/1.0.5/link) ![API](https://img.shields.io/badge/API-21%2B-brightgreen.svg)
 
@@ -10,8 +10,19 @@ Helps you add Stickers, Texts, Images & Emoji's over images and customize them
 Add the following dependencies in the gradle file of your app module to get started:  
 
 Gradle
+# In project level build.gradle or in setting.gradle file
 ```kotlin
-implementation 'com.github.binishmanandhar23:verticalcalendarlibrary:1.0.0'
+repositories {
+    maven{
+        url "https://jitpack.io"
+    }
+}
+```
+# In app level build.gradle
+```kotlin
+dependencies {
+    implementation 'com.github.binishmanandhar23:verticalcalendarlibrary:1.0.0'
+}
 ```
 Maven
 ```xml
@@ -24,6 +35,17 @@ Maven
 ```
 
 or if you want to further customize the module, simply import it.
+
+##Initial Setup
+I'm using org.threeten.bp library for working with dates which is why the library must be initialized in the Application file or your MainActivity's **onCreate()** before accessing the threeten library files
+```kotlin
+AndroidThreeTen.init(context) // VERY IMPORTANT
+```
+or
+```kotlin
+AndroidThreeTen.init(application) // VERY IMPORTANT
+```
+
 
 ## Setting up the View
 First we need to add `PhotoEditorView` in out xml layout
