@@ -7,15 +7,15 @@ import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 
 private val DarkColorPalette = darkColors(
-    primary = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Purple200,
-    primaryVariant = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Purple700,
-    secondary = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Teal200
+    primary = Purple200,
+    primaryVariant = Purple700,
+    secondary = Teal200,
 )
 
 private val LightColorPalette = lightColors(
-    primary = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Purple500,
-    primaryVariant = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Purple700,
-    secondary = io.github.binishmanandhar23.verticalcalendarlibrary.ui.theme.Teal200
+    primary = Purple500,
+    primaryVariant = Purple700,
+    secondary = Teal200
 
     /* Other default colors to override
     background = Color.White,

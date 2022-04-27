@@ -1,8 +1,7 @@
 package io.github.binishmanandhar23.verticalcalendarlibrary.model
 
-data class PopulatingData(var medicationDay: Collection<CalendarDay>? = null,
-                          var appointmentDay: Collection<CalendarDay>?= null,
-                          var popularDay: Collection<CalendarDay>?= null,
-                          var mindfulDay: Collection<CalendarDay>?= null,
-                          var highlighted: Collection<CalendarDay>? = null,
-                          )
+import androidx.compose.ui.Modifier
+
+data class PopulatingData(val collectionOfDates: List<IndividualData>? = null, val highlightedDates: Collection<CalendarDay>? = null){
+    data class IndividualData(val populatedDate: Collection<CalendarDay> = emptyList(), val customModifier: Modifier = Modifier)
+}

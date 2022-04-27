@@ -13,9 +13,4 @@ class CalendarVisualModifications {
     var textStyleForToday: TextStyle = TextStyle()
 
     var highlightImageId: Int? = null
-
-
-    var medicationIndicator: Modifier = Modifier
-    var appointmentIndicator: Modifier = Modifier
-    var otherIndicator: Modifier = Modifier
 }

@@ -32,6 +32,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemsIndexed
 import io.github.binishmanandhar23.verticalcalendarlibrary.enums.CalendarType
 import io.github.binishmanandhar23.verticalcalendarlibrary.enums.WeekDayEnum
+import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarDay
 import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarVisualModifications
 import io.github.binishmanandhar23.verticalcalendarlibrary.model.PopulatingData
 import io.github.binishmanandhar23.verticalcalendarlibrary.repository.CalendarPagingRepo
@@ -69,9 +70,8 @@ class VerticalCalendarLibrary {
     fun initialize(
         cellSize: Dp = 25.dp,
         listState: LazyListState,
-        coroutineScope: CoroutineScope,
         mutableSelectedDate: MutableLiveData<LocalDate>,
-        calendarDates: PopulatingData?,
+        calendarDates: PopulatingData = PopulatingData(),
         startingMonthFromCurrentMonth: Int = 60,
         listOfDays: List<String> = listOf(
             "Mon",
@@ -131,7 +131,6 @@ class VerticalCalendarLibrary {
                         listState = listState,
                         calendarDates,
                         selectedDateInState,
-                        coroutineScope,
                         calendarViewModel,
                         calendarVisualModifications,
                         calendarTypeState,
@@ -149,7 +148,6 @@ class VerticalCalendarLibrary {
                         calendarDates = calendarDates,
                         calendarViewModel,
                         selectedDateInState,
-                        coroutineScope,
                         calendarVisualModifications,
                         calendarTypeState,
                         onClickInitiatedFrom,
@@ -248,7 +246,6 @@ class VerticalCalendarLibrary {
         listState: LazyListState,
         calendarDates: PopulatingData?,
         selectedDate: State<LocalDate?>,
-        coroutineScope: CoroutineScope,
         calendarViewModel: CalendarViewModel,
         calendarVisualModifications: CalendarVisualModifications,
         calendarType: CalendarType,
@@ -262,12 +259,12 @@ class VerticalCalendarLibrary {
             newListState.scrollToItem(if (scrollToIndexForExpandedCalendar < 0) 0 else scrollToIndexForExpandedCalendar)
         })
         val isInScroll by derivedStateOf { newListState.isScrollInProgress }
-        LaunchedEffect(key1 = isInScroll){
+        LaunchedEffect(key1 = isInScroll) {
             snapshotFlow { newListState.firstVisibleItemScrollOffset }
                 .distinctUntilChanged()
                 .filter { it > 0 }
                 .collect {
-                    newListState.animateScrollToItem(if(it <= 450) newListState.firstVisibleItemIndex else newListState.firstVisibleItemIndex + 1)
+                    newListState.animateScrollToItem(if (it <= 450) newListState.firstVisibleItemIndex else newListState.firstVisibleItemIndex + 1)
                 }
 
         }
@@ -432,7 +429,6 @@ class VerticalCalendarLibrary {
         calendarDates: PopulatingData?,
         calendarViewModel: CalendarViewModel,
         selectedDate: State<LocalDate?>,
-        coroutineScope: CoroutineScope,
         calendarVisualModifications: CalendarVisualModifications,
         calendarType: CalendarType,
         onClickInitiatedFrom: MutableLiveData<CalendarType>,
@@ -598,39 +594,10 @@ class VerticalCalendarLibrary {
         calendarVisualModifications: CalendarVisualModifications,
         onClick: () -> Unit
     ) {
-        var isPopulated = false
-        var isMedicineAdded = false
-        var isAppointmentAdded = false
-        var isMindfulActivityAdded = false
-        var isHighlighted = false
-        calendarDates.medicationDay?.forEach CalendarDates@{ calendarDate ->
-            if (calendarDate.date == date) {
-                isPopulated = true
-                isMedicineAdded = true
-                return@CalendarDates
-            }
-        }
-        calendarDates.appointmentDay?.forEach CalendarDates@{ calendarDate ->
-            if (calendarDate.date == date) {
-                isPopulated = true
-                isAppointmentAdded = true
-                return@CalendarDates
-            }
-        }
-        calendarDates.highlighted?.forEach CalendarDates@{ calendarDate ->
-            if (calendarDate.date == date) {
-                isPopulated = true
-                isHighlighted = true
-                return@CalendarDates
-            }
-        }
-        calendarDates.mindfulDay?.forEach CalendarDates@{ calendarDate ->
-            if (calendarDate.date == date) {
-                isPopulated = true
-                isMindfulActivityAdded = true
-                return@CalendarDates
-            }
-        }
+        val isPopulated = VerticalCalendarUtils.isPopulated(
+            calendarDates.collectionOfDates,
+            date
+        )
         Column(
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
@@ -654,7 +621,10 @@ class VerticalCalendarLibrary {
                     modifier = modifier,
                     textAlign = TextAlign.Center
                 )
-                if (calendarVisualModifications.highlightImageId != null && isHighlighted)
+                if (calendarVisualModifications.highlightImageId != null && calendarDates.highlightedDates?.contains(
+                        CalendarDay.from(date)!!
+                    ) == true
+                )
                     Image(
                         painterResource(id = calendarVisualModifications.highlightImageId!!),
                         contentDescription = "Highlighted",
@@ -665,35 +635,33 @@ class VerticalCalendarLibrary {
                     )
             }
             IndicatorDesign(
+                date,
                 isPopulated,
-                isMedicineAdded,
-                isAppointmentAdded,
-                isMindfulActivityAdded,
-                calendarVisualModifications
+                calendarDates
             )
         }
     }
 
     @Composable
     private fun IndicatorDesign(
+        currentDate: LocalDate?,
         isPopulated: Boolean,
-        isMedicineAdded: Boolean,
-        isAppointmentAdded: Boolean,
-        isMindfulActivityAdded: Boolean,
-        calendarVisualModifications: CalendarVisualModifications
+        calendarDates: PopulatingData
     ) {
         if (isPopulated)
             Row {
-                if (isMedicineAdded)
-                    Box(modifier = calendarVisualModifications.medicationIndicator)
-                if ((isMedicineAdded && isAppointmentAdded) || (isMedicineAdded && isMindfulActivityAdded))
-                    Spacer(modifier = Modifier.size(2.dp))
-                if (isAppointmentAdded)
-                    Box(modifier = calendarVisualModifications.appointmentIndicator)
-                if ((isMedicineAdded && isAppointmentAdded && isMindfulActivityAdded) || (isMindfulActivityAdded && isAppointmentAdded))
-                    Spacer(modifier = Modifier.size(2.dp))
-                if (isMindfulActivityAdded)
-                    Box(modifier = calendarVisualModifications.otherIndicator)
+                var indicators = 0
+                calendarDates.collectionOfDates?.forEach {
+                    it.populatedDate.forEach { calendarDay ->
+                        if (calendarDay.date == currentDate) {
+                            if (indicators > 0)
+                                Spacer(modifier = Modifier.size(2.dp))
+                            Box(modifier = it.customModifier).also {
+                                indicators++
+                            }
+                        }
+                    }
+                }
             }
         else
             Spacer(modifier = Modifier.size(5.dp))

@@ -1,5 +1,7 @@
 package io.github.binishmanandhar23.verticalcalendarlibrary.util
 
+import io.github.binishmanandhar23.verticalcalendarlibrary.model.CalendarDay
+import io.github.binishmanandhar23.verticalcalendarlibrary.model.PopulatingData
 import org.threeten.bp.DayOfWeek
 import org.threeten.bp.LocalDate
 import org.threeten.bp.Period
@@ -29,5 +31,15 @@ object VerticalCalendarUtils {
         val todayDate = LocalDate.now()
         val difference = ChronoUnit.WEEKS.between(todayDate.with(DayOfWeek.MONDAY), selectedDate.with(DayOfWeek.MONDAY))
         return (NUMBEROFWEEKS + difference).toInt()
+    }
+
+    fun isPopulated(calendarDates: List<PopulatingData.IndividualData>?, currentDate: LocalDate?): Boolean{
+        calendarDates?.forEach {
+            it.populatedDate.forEach { calendarDay ->
+                if(calendarDay.date == currentDate)
+                    return true
+            }
+        }
+        return false
     }
 }
