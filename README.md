@@ -63,15 +63,14 @@ VerticalCalendarLibrary().initialize(
 )
 ```
 
-We can define our drawable or color resource directly using `app:photo_src`
-
-Or,
-
-We can set the image programmatically by getting source from `PhotoEditorView` which will return a `ImageView` so that we can load image from resources,file or (Picasso/Glide)
+## Necessary Parameters
+`onClickInitiatedFrom` is necessary for mitigating date selection issue when communicating between multiple calendars. (As can be seen in Multi-mode of the example app)
 
 
-```kotlin
-val mPhotoEditorView = findViewById(R.id.photoEditorView)
-mPhotoEditorView.source.setImageResource(R.drawable.nepal_wallpaper)
-```
+## Non-stable Parameters
+`weekDayEnd` is currently not stable. Please use the default `WeekDayEnum.SUNDAY` for now.
+`startingMonthFromCurrentMonth` is also not in use as of now. Starting & ending month are static for now.
+
+# Important
+Currently, the total number of weeks is **265 weeks** before & after from current week whereas total number of months is **60 months**  before & after from current month.
 
