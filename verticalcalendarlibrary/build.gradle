@@ -75,6 +75,10 @@ dependencies {
     implementation 'com.github.iamjosephmj:Flinger:1.1.1'
     //-------------------------//
 
+    //Own Vertical Library
+    implementation 'com.github.binishmanandhar23:verticalcalendarlibrary:1.0.0'
+    //-------------------------//
+
     implementation 'androidx.core:core-ktx:1.7.0'
     implementation 'androidx.appcompat:appcompat:1.4.1'
     implementation 'com.google.android.material:material:1.5.0'
