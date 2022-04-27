@@ -35,7 +35,7 @@ Maven
 or if you want to further customize the module, simply import it.
 
 ## Initial Setup
-I'm using org.threeten.bp library for working with dates which is why the library must be initialized in the Application file or your MainActivity's **onCreate()** before accessing the threeten library files
+I'm using org.threeten:threetenbp library for working with dates which is why the library must be initialized in the Application file or your MainActivity's **onCreate()** before accessing the threeten library files
 ```kotlin
 AndroidThreeTen.init(context) // VERY IMPORTANT
 ```
@@ -49,6 +49,7 @@ AndroidThreeTen.init(application) // VERY IMPORTANT
 To initialize the Calendar View
 
 ### Simple initialization
+**For Compose**
 ```kotlin
 VerticalCalendarLibrary().initialize(
     listState = rememberLazyListState(),
@@ -63,14 +64,38 @@ VerticalCalendarLibrary().initialize(
 )
 ```
 
+**Workaround for xml**
+```xml
+<androidx.compose.ui.platform.ComposeView
+    android:id="@+id/compose_view"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+```
+then, in the code file
+```kotlin
+compose_view.setContent{
+    VerticalCalendarLibrary().initialize(
+        listState = rememberLazyListState(),
+        mutableSelectedDate = MutableLiveData(LocalDate.now()), // Current selected date
+        calendarDates = PopulatingData(
+            listOf(PopulatingData()), //Pass dates that have events along with a Modifier to be used in designing indicators for the dates
+            highlightedDates = Collection<CalendarDay> //Pass dates that are to be highlighted
+        ),
+        fullCalendarHeight = LocalContext.current.getDeviceFullHeight().dp, // Height for the calendar when it's in Full mode
+        calendarTypeState = calendarType, //There are two types: CalendarType.FULL & CalendarType.MINI
+        calendarVisualModifications = CalendarVisualModifications() // Various types of visual modifications for the Calendar
+    )     
+}
+```
+
 ## Necessary Parameters
 `onClickInitiatedFrom` is necessary for mitigating date selection issue when communicating between multiple calendars. (As can be seen in Multi-mode of the example app)
 
 
 ## Non-stable Parameters
 `weekDayEnd` is currently not stable. Please use the default `WeekDayEnum.SUNDAY` for now.
-`startingMonthFromCurrentMonth` is also not in use as of now. Starting & ending month are static for now.
+`startingMonthFromCurrentMonth` is also not in use as of now. Starting & ending month are static for now. (More information given in the **Important** section)
 
 # Important
-Currently, the total number of weeks is **265 weeks** before & after from current week whereas total number of months is **60 months**  before & after from current month.
+In v1.0.0, the total number of weeks is **265 weeks** before & after from current week whereas total number of months is **60 months**  before & after from current month.
 
